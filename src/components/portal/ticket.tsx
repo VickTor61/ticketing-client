@@ -1,17 +1,15 @@
 import { useState } from "react";
 import {
-  COMMENTS_QUERY,
-  Comment as CommentType,
+  Comment as CommentProp,
   CurrentUser,
   Ticket as TicketType,
 } from "../../graphql/query";
 import { Comment } from "./comment";
-import { useMutation, useQuery } from "@apollo/client";
-import { Loader } from "lucide-react";
-import { CREATE_COMMENT_MUTATION } from "../../graphql/mutation";
 
 interface TicketProps {
   ticket: TicketType;
+  comments: CommentProp[];
+  commentLoading: boolean;
   currentUser: CurrentUser;
   onBack: () => void;
 
@@ -21,66 +19,24 @@ interface TicketProps {
     id: string
   ) => void;
   formatDate: (dateString: string) => string;
+  onAddComment: (comment: string, ticketId: string) => void;
   getPriorityColor: (priority: TicketType["priority"]) => string;
   getStatusColor: (status: TicketType["status"]) => string;
 }
 
 export const Ticket = ({
   ticket,
+  comments,
+  commentLoading,
   currentUser,
   onBack,
   onTicketUpdate,
   formatDate,
   getPriorityColor,
   getStatusColor,
+  onAddComment,
 }: TicketProps) => {
   const [newComment, setNewComment] = useState<string>("");
-  const [comments, setComments] = useState<CommentType[]>([]);
-
-  const { loading } = useQuery(COMMENTS_QUERY, {
-    variables: { ticketId: ticket.id },
-    onCompleted: (data) => {
-      setComments(data.comments);
-    },
-    onError: (error) => {
-      console.error("fetch error", error);
-    },
-  });
-
-  // Add a new comment
-
-  const [create_comment, { loading: commentLoading }] = useMutation(
-    CREATE_COMMENT_MUTATION,
-    {
-      onCompleted: (data) => {
-        const comment = data.createComment.comment;
-
-        if (comment) {
-          setComments((comments) => [...comments, comment]);
-          setNewComment("");
-        }
-      },
-      onError: (error) => {
-        console.log(error);
-      },
-    }
-  );
-
-  const handleAddComment = async (comment: string) => {
-    try {
-      await create_comment({
-        variables: {
-          input: {
-            ticketId: Number(ticket.id),
-            content: comment,
-            userId: Number(currentUser.id),
-          },
-        },
-      });
-    } catch (error) {
-      console.error("Error creating comment:", error);
-    }
-  };
 
   return (
     <div>
@@ -165,10 +121,8 @@ export const Ticket = ({
           <div className="px-3 py-2 text-sm border border-gray-200 rounded-md shadow-sm ">
             No comments yet. A support agent will respond to your ticket soon.
           </div>
-        ) : loading ? (
-          <Loader />
         ) : (
-          comments.map((comment: CommentType) => (
+          comments.map((comment: CommentProp) => (
             <Comment key={comment.id} comment={comment} />
           ))
         )}
@@ -185,7 +139,10 @@ export const Ticket = ({
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
             />
             <button
-              onClick={() => handleAddComment(newComment)}
+              onClick={() => {
+                onAddComment(newComment, ticket.id);
+                setNewComment("");
+              }}
               disabled={!newComment.trim()}
               className={`inline-flex items-center px-2 py-1.5 text-sm text-white rounded-md transition-colors ${
                 newComment.trim()

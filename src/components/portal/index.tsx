@@ -4,11 +4,14 @@ import {
   Status,
   Ticket as TicketType,
   TICKETS_QUERY,
+  COMMENTS_QUERY,
+  Comment,
 } from "../../graphql/query";
-import { useQuery, useMutation } from "@apollo/client";
+import { useQuery, useMutation, useLazyQuery } from "@apollo/client";
 import { CreateTicket } from "./create_ticket";
 import { useState } from "react";
 import {
+  CREATE_COMMENT_MUTATION,
   CREATE_TICKET_MUTATION,
   EXPORT_CLOSED_TICKETS_MUTATION,
   UPDATE_TICKET_MUTATION,
@@ -31,6 +34,7 @@ const Portal = ({ currentUser }: { currentUser: CurrentUser }) => {
   const [tickets, setTickets] = useState<TicketType[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
 
   const { loading } = useQuery(TICKETS_QUERY, {
     onCompleted: (data) => {
@@ -125,6 +129,63 @@ const Portal = ({ currentUser }: { currentUser: CurrentUser }) => {
     await export_tickets();
   };
 
+  const [create_comment, { loading: commentLoading }] = useMutation(
+    CREATE_COMMENT_MUTATION,
+    {
+      onCompleted: (data) => {
+        const comment = data.createComment.comment;
+
+        if (comment) {
+          setComments((comments) => [...comments, comment]);
+        }
+      },
+      onError: (error) => {
+        console.log(error);
+      },
+    }
+  );
+
+  const handleAddComment = async (comment: string, ticketId: string) => {
+    try {
+      await create_comment({
+        variables: {
+          input: {
+            ticketId: Number(ticketId),
+            content: comment,
+            userId: Number(currentUser.id),
+          },
+        },
+      });
+
+      setTickets((prevTickets) =>
+        prevTickets.map((ticket) => {
+          if (ticket.id === ticketId) {
+            return {
+              ...ticket,
+              commentsCount: ticket.commentsCount + 1,
+            };
+          }
+          return ticket;
+        })
+      );
+    } catch (error) {
+      console.error("Error creating comment:", error);
+    }
+  };
+
+  const [getComments] = useLazyQuery(COMMENTS_QUERY, {
+    onCompleted: (data) => {
+      setComments(data.comments);
+    },
+  });
+
+  const handleTicketSelected = (ticket: TicketType) => {
+    setSelectedTicket(ticket);
+    getComments({
+      variables: { ticketId: ticket.id },
+    });
+  };
+
   return (
     <div className="max-w-6xl p-4 mx-auto mt-2">
       <header className="flex items-center justify-end gap-x-2">
@@ -163,12 +224,15 @@ const Portal = ({ currentUser }: { currentUser: CurrentUser }) => {
           formatDate={formatDate}
           currentUser={currentUser}
           onTicketUpdate={handleTicketUpdate}
+          onAddComment={handleAddComment}
+          commentLoading={commentLoading}
+          comments={comments}
         />
       ) : tickets.length > 0 ? (
         <Tickets
           tickets={tickets}
           loading={loading}
-          onSelectTicket={setSelectedTicket}
+          onSelectTicket={handleTicketSelected}
           getStatusColor={getStatusColor}
           getPriorityColor={getPriorityColor}
           formatDate={formatDate}
