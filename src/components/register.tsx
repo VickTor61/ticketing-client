@@ -3,6 +3,8 @@ import { useState } from "react";
 import { REGISTER_MUTATION } from "../graphql/mutation";
 import { useNavigate } from "react-router-dom";
 import ErrorComponent from "../Error";
+import { Input } from "./common/Input";
+import { SelectRole } from "./common/SelectRole";
 
 export const Register = () => {
   const navigate = useNavigate();
@@ -129,63 +131,3 @@ export const Register = () => {
     </form>
   );
 };
-
-interface InputProps {
-  label: string;
-  type?: string;
-  name: string;
-  placeholder?: string;
-  value: string | number;
-  onChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => void;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-}
-
-export const Input = ({
-  label,
-  type = "text",
-  name,
-  placeholder,
-  value,
-  onChange,
-  onKeyDown,
-}: InputProps) => {
-  return (
-    <div>
-      <label className="block mb-1 text-sm font-medium text-gray-700">
-        {label}
-      </label>
-      <input
-        type={type}
-        name={name}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        onKeyDown={onKeyDown}
-        required
-        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-300"
-      />
-    </div>
-  );
-};
-
-const SelectRole = ({
-  value,
-  onChange,
-}: Pick<InputProps, "value" | "onChange">) => (
-  <div>
-    <label className="block mb-2 text-sm font-medium text-gray-700">
-      Account Type
-    </label>
-    <select
-      name="role"
-      value={value}
-      onChange={onChange}
-      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-300 focus:border-transparent"
-    >
-      <option value="customer">customer</option>
-      <option value="agent">agent</option>
-    </select>
-  </div>
-);

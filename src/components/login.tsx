@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Input } from "./register";
 import { useMutation, useApolloClient } from "@apollo/client";
+import { Input } from "./common/Input";
 import { LOGIN_MUTATION } from "../graphql/mutation";
 import { useNavigate } from "react-router-dom";
 import ErrorComponent from "../Error";

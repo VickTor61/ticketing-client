@@ -183,6 +183,7 @@ const Portal = ({ currentUser }: { currentUser: CurrentUser }) => {
     setSelectedTicket(ticket);
     getComments({
       variables: { ticketId: ticket.id },
+      fetchPolicy: "network-only",
     });
   };
 

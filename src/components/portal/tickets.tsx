@@ -1,13 +1,12 @@
 import { Loader } from "lucide-react";
 import { Ticket } from "../../graphql/query";
+import { getStatusColor, getPriorityColor, formatDate } from "../../utils/displayHelpers";
+
 
 export const Tickets = ({
   tickets,
   loading,
   onSelectTicket,
-  getStatusColor,
-  getPriorityColor,
-  formatDate,
 }: any) => {
   return (
     <main>
@@ -29,14 +28,14 @@ export const Tickets = ({
                 <div className="flex items-center gap-x-2">
                   <span
                     className={`py-1 text-xs px-1.5 rounded bg-black text-white ${
-                      getPriorityColor[ticket.priority]
+                      getPriorityColor(ticket.priority)
                     }`}
                   >
                     {ticket.priority}
                   </span>
                   <span
                     className={`py-1 text-xs px-1.5 rounded text-white text-nowrap ${
-                      getStatusColor[ticket.status] || "bg-gray-500"
+                      getStatusColor(ticket.status) || "bg-gray-500"
                     }`}
                   >
                     {ticket.status.replace("_", " ")}

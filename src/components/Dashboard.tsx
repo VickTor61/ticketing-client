@@ -1,15 +1,15 @@
-import { useMutation, useQuery, useApolloClient } from "@apollo/client";
+import { useQuery } from "@apollo/client";
 import { CURRENT_USER_QUERY } from "../graphql/query";
 import { useNavigate } from "react-router-dom";
 
-import { LOGOUT_MUTATION } from "../graphql/mutation";
-import { removeToken } from "../utils/helpers";
 import Portal from "./portal";
 import { Loader } from "lucide-react";
+import { useLogout } from "../hooks/useLogout";
+import { removeToken } from "../utils/helpers";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const client = useApolloClient();
+  const logout = useLogout();
 
   const { data, loading } = useQuery(CURRENT_USER_QUERY, {
     onCompleted: (data) => {
@@ -23,21 +23,6 @@ export default function Dashboard() {
       console.error("Error fetching current user:", error);
     },
   });
-
-  const [logout] = useMutation(LOGOUT_MUTATION, {
-    onCompleted: async () => {
-      await client.resetStore();
-      removeToken();
-      navigate("/login");
-    },
-    onError: (error) => {
-      console.error("Error logging out:", error);
-    },
-  });
-
-  const logoutHandler = async () => {
-    await logout();
-  };
 
   return !data?.me || loading ? (
     <Loader />
@@ -59,7 +44,7 @@ export default function Dashboard() {
 
           <button
             className="px-2 py-1 text-sm font-medium text-white bg-red-600 border border-gray-200 rounded-md shadow-sm cursor-pointer"
-            onClick={logoutHandler}
+            onClick={logout}
           >
             Logout
           </button>
